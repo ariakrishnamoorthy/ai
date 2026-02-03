@@ -95,17 +95,36 @@ class Network3():
     
     def number(self, numbers):
         maxindex = 0
-        max = 0
+        max = numbers[0]
         for i in range(len(numbers)):
             if numbers[i] > max:
                 max = numbers[i]
                 maxindex = i 
         return maxindex
 
+    def convolve(self, image):
+        self.Z = np.zeros()
+        length, width = self.Z.shape
+        kSize = self.kernel1.size
+        
+
+        for i in range(length):
+            for j in range(width):
+                patch = image[i:i+kSize, j:j+kSize]
+                self.Z[i,j] = np.sum(patch * self.kernel1.kernel) + self.kernel1.bias
+
+    def return_input_layer(self):
+        return self.A
+        
+    def ReLU(self):
+        self.A = self.Z.copy()
+        self.A[self.A < 0] = 0
     # change order becuase cant update weights before updating kernel cuz updating kernel relies on weights
 
     # goal will be like [0, 0 0, 0, 1 0 0]
     def backprop(self, image, goal):
+
+
         hL_affects_loss = []
         derivativeActivation = 0
 
@@ -185,22 +204,6 @@ class Network3():
 
             
 
-    def convolve(self, image):
-        length, width = self.Z.shape
-        kSize = self.kernel1.size
-        
-
-        for i in range(length):
-            for j in range(width):
-                patch = image[i:i+kSize, j:j+kSize]
-                self.Z[i,j] = np.sum(patch * self.kernel1.kernel) + self.kernel1.bias
-
-    def return_input_layer(self):
-        return self.A
-        
-    def ReLU(self):
-        self.A = self.Z.copy()
-        self.A[self.A < 0] = 0
 
       
 

@@ -93,9 +93,10 @@ class Network():
 
     # goal will be like [0, 0 0, 0, 1 0 0]
     def backprop(self, goal):
-        hiddenLayerGoal = []
         hL_affects_loss = []
         derivativeActivation = 0
+
+        
 
         for neuron in self.outputLayer.neurons:
             derivativeBias = 2*(neuron.activation - goal[self.outputLayer.neurons.index(neuron)]) * neuron.activation * (1-neuron.activation)
