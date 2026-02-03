@@ -1,15 +1,7 @@
 import math
 import random
-import copy
 import numpy as np
 
-
-# plan for my code
-# 30x30x1 input and convolve to get 28x28x8 (with 8 3x3 kernels)
-# then pool to get 14x14x8
-# then pad to get 16x16x8
-# then convolve with 8 3x3x8 kernels to get 14x14x8
-# then pool to get 7x7x8
 
 class Neuron():
     # from the previous layer to this neuron
@@ -19,13 +11,17 @@ class Neuron():
         self.bias = bias
         self.z = 0
 
-    def activate(self):
+    def activate(self, useRelu):
         z = 0
         for i in self.weights:
             z += i.startNeuron.activation * i.strength
         z += self.bias
         self.z = z
-        self.activation = 1/(1+(math.e)**(-z))
+        if(useRelu):
+             self.activation = max(0, self.z)
+        else:
+            self.activation = self.z
+       
     
 
 class Layer():
@@ -59,14 +55,13 @@ class Network3():
         self.inputLayer = inputLayer
         self.hiddenLayer = hiddenLayer
         self.outputLayer = outputLayer
-        self.Z = None
-        self.A = None
-        self.kernel1 = kernel1
+        self.softMaxOutput = []
+      
         #self.kernel2 = kernel2
     
     def connect(self):
-        self.hiddenLayer.connect(self.inputLayer)
-        self.outputLayer.connect(self.hiddenLayer)
+        self.hiddenLayer.connect(self.inputLayer, True)
+        self.outputLayer.connect(self.hiddenLayer, False)
 
 
     def forwardPass(self):
@@ -80,6 +75,33 @@ class Network3():
         for weight in end.weights:
             if weight.startNeuron == start:
                 return weight.strength
+            
+    def get_last_layer(self):
+        last_layer = []
+        for neuron in self.outputLayer.neurons:
+            last_layer.append(neuron.activation)
+        return last_layer
+            
+    def softmax(self):
+        last_layer = self.get_last_layer()
+
+        max = last_layer[0]
+        for a in last_layer:
+            if a > max:
+                max = a
+
+        sum = 0
+        exp_values = []
+        for a in last_layer :
+            e = math.exp(a - max)
+            exp_values.append(e)
+            sum += e
+        probabilities = []
+        for e in exp_values:
+            probabilities.append(e/sum)
+        self.softMaxOutput = probabilities
+    
+
 
     def cost(self, goal):
         cost = 0
