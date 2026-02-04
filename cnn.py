@@ -100,6 +100,12 @@ class Network3():
         for e in exp_values:
             probabilities.append(e/sum)
         self.softMaxOutput = probabilities
+
+    def cross_entropy_loss(self, label):
+        epsilon = 0.0000000001
+        actual = self.softMaxOutput[label]
+        return -math.log(actual + epsilon)
+        
     
 
 
