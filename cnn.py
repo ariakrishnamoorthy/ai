@@ -48,16 +48,23 @@ class Weight():
         self.strength = strength
         self.startNeuron = start
 
+class Kernel():
+    def __init__(self, size):
+        self.kernel = np.random.uniform(-0.1, 0.1, (size, size));
+        self.size = size
+
 
 # should take image in the function instelf, not in the network cuz network does not depend on image
 class Network3():
-    def __init__(self, inputLayer, hiddenLayer, outputLayer):
+    def __init__(self, inputLayer, hiddenLayer, outputLayer, kernel1):
         self.inputLayer = inputLayer
         self.hiddenLayer = hiddenLayer
         self.outputLayer = outputLayer
         self.softMaxOutput = []
-      
-        #self.kernel2 = kernel2
+        self.convolved = None
+        self.conv_pre_relu = None
+
+        self.kernel = kernel1
     
     def connect(self):
         self.hiddenLayer.connect(self.inputLayer)
@@ -106,15 +113,48 @@ class Network3():
         actual = self.softMaxOutput[label]
         return -math.log(actual + epsilon)
     
-    def backpropagate(self, label):
+    def convolve(self, image):
+        H = self.kernel.size
+        W = self.kernel.size
+        H_img, W_img = image.shape
+        out_h = H_img - H + 1
+        out_w = W_img - W + 1
+        pre = [[0.0 for _ in range(out_w)] for _ in range(out_h)]
+        layer = [[0.0 for _ in range(out_w)] for _ in range(out_h)]
+
+
+        for i in range(out_h):
+            for j in range(out_w):
+                z = self.multiply_kernel(image, i, j)
+                pre[i][j] = z
+                layer[i][j] = max(0.0, z)
+        
+        self.conv_pre_relu = pre
+        np_layer = np.array(layer)
+        
+        return np_layer
+        
+
+    def multiply_kernel(self, image, index1, index2):
+        sum = 0
+        for i in range(index1, index1+ self.kernel.size):
+            for j in range(index2, index2 + self.kernel.size):
+                sum += self.kernel.kernel[i-index1][j-index2] * image[i][j]
+
+        return sum
+
+    
+    def backpropagate(self, image,label):
         target = [0]*10
         target[label] = 1
         dz = []
+        dh = []
+        delta_flat = []
         
         for i in range(len(self.outputLayer.neurons)):
             dz.append(self.softMaxOutput[i] - target[i])
 
-        learning_rate = 0.001
+        learning_rate = 0.0001
         for i, neuron in enumerate(self.outputLayer.neurons):
             dz_i = dz[i]
 
@@ -130,7 +170,7 @@ class Network3():
             dz_h = 0
             for i, outputneuron in enumerate(self.outputLayer.neurons):
                 dz_h += dz[i] * self.weightbetween(hiddenneuron, outputneuron)
-
+            dh.append(dz_h)
             if hiddenneuron.z <= 0:
                 dz_h = 0
 
@@ -138,6 +178,56 @@ class Network3():
                 weight.strength -= learning_rate * dz_h * weight.startNeuron.activation
             
             hiddenneuron.bias -= learning_rate * dz_h
+
+    
+
+        for i, inputneuron in enumerate(self.inputLayer.neurons):
+            dz_i = 0
+            for h, hiddenneuron in enumerate(self.hiddenLayer.neurons):
+                dz_i += dh[h] * self.weightbetween(inputneuron, hiddenneuron)
+            delta_flat.append(dz_i)   
+        self.backprop_kernel(image, delta_flat)
+        
+
+        
+
+    def backprop_kernel(self, image, delta_flat):
+        learning_rate = 0.0001
+        H = self.kernel.size
+        W = self.kernel.size
+        H_img, W_img = image.shape
+        out_h = H_img - H + 1
+        out_w = W_img - W + 1
+
+        delta = np.array(delta_flat).reshape(out_h, out_w)
+
+        delta_pre = np.zeros_like(delta)
+        dK = [[0.0 for _ in range(W)] for _ in range(H)]
+        for i in range(out_h):
+            for j in range(out_w):
+                if (self.conv_pre_relu[i][j] > 0):
+                    delta_pre[i][j] = delta[i][j]
+                else:
+                    delta_pre[i][j] = 0
+               
+
+        kernel_grad = 0
+        for u in range (H):
+            for v in range (W):
+                kernel_grad = 0
+                for i in range(out_h):
+                    for j in range(out_w):
+                        kernel_grad += delta_pre[i][j] * image[i + u][j + v]
+
+            dK[u][v] = kernel_grad
+        for u in range(H):
+            for v in range(W):
+                self.kernel.kernel[u][v] -= learning_rate * dK[u][v]
+
+        
+
+
+
 
         
 
