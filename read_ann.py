@@ -5,7 +5,7 @@ import gzip
 import os
 import pickle
 
-from cnn import Kernel, Layer, Network3, Neuron
+from ann import  Layer, Network3, Neuron
 
 def load_mnist_images(filename):
     with gzip.open(filename, 'rb') as f:
@@ -53,14 +53,13 @@ if os.path.exists(SAVE_PATH):
 else:
     print("yay")
 
-    input_layer = Layer([Neuron() for _ in range(26*26)])
+    input_layer = Layer([Neuron() for _ in range(28*28)])
     hidden_layer = Layer([Neuron() for _ in range(128)])
     output_layer = Layer([Neuron() for _ in range(10)])
 
-    kernel = Kernel(3)
 
 
-    network = Network3(input_layer, hidden_layer, output_layer, kernel)
+    network = Network3(input_layer, hidden_layer, output_layer)
 
     network.connect()
 
