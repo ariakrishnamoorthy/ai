@@ -43,6 +43,12 @@ SAVE_PATH = 'network.pkl'
 
 # comment out later!
 
+""" if os.path.exists(SAVE_PATH):
+    os.remove(SAVE_PATH)
+    print(f"Successfully deleted {SAVE_PATH}! You can now retrain.")
+else:
+    print(f"{SAVE_PATH} does not exist.")  """
+
 
 if os.path.exists(SAVE_PATH):
     # Skip training entirely — load saved weights
@@ -73,13 +79,11 @@ else:
     for epoch in range(10):
         random.shuffle(indices)
         for i in (indices):
-            img_2d = x_train[i].reshape(28, 28)
-            conv_map = network.convolve(img_2d)
-            flat = conv_map.reshape(-1).tolist()
-            network.inputLayer.changeNeuronActivations(flat)
+    
+            network.inputLayer.changeNeuronActivations(x_train[i])
             network.forwardPass()
             network.softmax()
-            network.backpropagate(img_2d, y_train[i])
+            network.backpropagate(x_train[i], y_train[i])
         
         print(f"Epoch {epoch+1} complete")
         with open(SAVE_PATH, 'wb') as f:
@@ -93,10 +97,7 @@ num_tests = len(x_test)
 for j in range(num_tests):
 
     # Set input activations
-    img_2d = x_test[j].reshape(28, 28)
-    conv_map = network.convolve(img_2d)
-    flat = conv_map.reshape(-1).tolist()
-    network.inputLayer.changeNeuronActivations(flat)
+    network.inputLayer.changeNeuronActivations(x_test[j])
     network.forwardPass()
     network.softmax()
 

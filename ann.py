@@ -51,7 +51,7 @@ class Weight():
 
 # should take image in the function instelf, not in the network cuz network does not depend on image
 class Network3():
-    def __init__(self, inputLayer, hiddenLayer, outputLayer, kernel1):
+    def __init__(self, inputLayer, hiddenLayer, outputLayer):
         self.inputLayer = inputLayer
         self.hiddenLayer = hiddenLayer
         self.outputLayer = outputLayer
@@ -114,7 +114,7 @@ class Network3():
         for i in range(len(self.outputLayer.neurons)):
             dz.append(self.softMaxOutput[i] - target[i])
 
-        learning_rate = 0.0001
+        learning_rate = 0.001
         for i, neuron in enumerate(self.outputLayer.neurons):
             dz_i = dz[i]
 
@@ -125,11 +125,11 @@ class Network3():
             # update bias
             neuron.bias -= learning_rate * dz_i
 
-        
         for h, hiddenneuron in enumerate(self.hiddenLayer.neurons):
             dz_h = 0
             for i, outputneuron in enumerate(self.outputLayer.neurons):
-                dz_h += dz[i] * self.weightbetween(hiddenneuron, outputneuron)
+                # We know the h-th weight belongs to the h-th hidden neuron
+                dz_h += dz[i] * outputneuron.weights[h].strength
             dh.append(dz_h)
             if hiddenneuron.z <= 0:
                 dz_h = 0
