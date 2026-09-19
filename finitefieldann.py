@@ -76,7 +76,10 @@ class Network3():
     def embed_and_forward(self, i, j):
         self._last_i = i
         self._last_j = j
-        vec = self.E[i] + self.E[j]
+        #a = min(i,j)
+        #b = max(i,j)
+
+        vec = [self.E[i][k] + self.E[j][k] for k in range(8)]
         self.inputLayer.changeNeuronActivations(vec)
         self.forwardPass()
 
@@ -139,14 +142,14 @@ class Network3():
         # Embedding gradients
         num_hidden = len(self.hiddenLayer.neurons)
         dInput = [sum(self.hiddenLayer.neurons[h].weights[k].strength * dh[h]
-                    for h in range(num_hidden)) for k in range(16)]
+                    for h in range(num_hidden)) for k in range(8)]
 
         # Store all gradients for adamw_step to consume
         self._grads = {
             'dz': dz,
             'dh': dh,
-            'dE_i': dInput[:8],
-            'dE_j': dInput[8:],
+            'dE_i': dInput,
+            'dE_j': dInput,
     }
 
 
@@ -186,8 +189,15 @@ class Network3():
 
         # Embedding matrix
         for k in range(8):
-            self.E[self._last_i][k] = step(('E', self._last_i, k), self.E[self._last_i][k], dEi[k])
-            self.E[self._last_j][k] = step(('E', self._last_j, k), self.E[self._last_j][k], dEj[k])
+
+            if self._last_i == self._last_j:
+                self.E[self._last_i][k] = step(('E', self._last_i, k),
+                self.E[self._last_i][k], dEi[k] + dEj[k])
+            else:
+                self.E[self._last_i][k] = step(('E', self._last_i, k), self.E[self._last_i][k], dEi[k])
+                self.E[self._last_j][k] = step(('E', self._last_j, k), self.E[self._last_j][k], dEj[k])
+            #self.E[self._last_i][k] = step(('E', self._last_i, k), self.E[self._last_i][k], dEi[k])
+            #self.E[self._last_j][k] = step(('E', self._last_j, k), self.E[self._last_j][k], dEj[k])
 
     def backpropagate2(self, label, learning_rate):
         num_outputs = len(self.outputLayer.neurons)
